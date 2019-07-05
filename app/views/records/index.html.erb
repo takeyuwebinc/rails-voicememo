@@ -2,9 +2,13 @@
 <p>Find me in app/views/records/index.html.erb</p>
 
 <div>
-<button id="js-start-recording">Start</button>
-<button id="js-stop-recording">Stop</button>
+  <button id="js-start-recording">Start</button>
+  <button id="js-stop-recording">Stop</button>
 </div>
 
-<section id="js-sound-clips">
-</section>
+<% @records.each do |record| %>
+  <article>
+    <p><%= record.created_at %></p>
+    <%= audio_tag rails_blob_url(record.voice, disposition: "attachment"), controls: true %>
+  </article>
+<% end %>

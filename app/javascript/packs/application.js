@@ -7,6 +7,7 @@ require("@rails/ujs").start();
 require("turbolinks").start();
 require("@rails/activestorage").start();
 require("channels");
+const axios = require("axios");
 
 // Uncomment to copy all static images under ../images to the output folder and reference
 // them with the image_pack_tag helper in views (e.g <%= image_pack_tag 'rails.png' %>)
@@ -31,7 +32,8 @@ function init() {
   let chunks = [];
 
   const onSuccess = stream => {
-    const mediaRecorder = new MediaRecorder(stream);
+    var options = { mimeType: "audio/webm" };
+    const mediaRecorder = new MediaRecorder(stream, options);
 
     startButton.addEventListener("click", () => {
       mediaRecorder.start();
@@ -52,23 +54,25 @@ function init() {
     mediaRecorder.onstop = e => {
       console.log("data available after MediaRecorder.stop() called.");
 
-      var clipContainer = document.createElement("article");
-      var clipLabel = document.createElement("p");
-      var audio = document.createElement("audio");
-      clipContainer.classList.add("clip");
-      audio.setAttribute("controls", "");
-
-      clipLabel.textContent = Date();
-
-      clipContainer.appendChild(audio);
-      clipContainer.appendChild(clipLabel);
-      soundClips.appendChild(clipContainer);
-
-      audio.controls = true;
       var blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
       chunks = [];
-      var audioURL = window.URL.createObjectURL(blob);
-      audio.src = audioURL;
+
+      var uploadFormData = new FormData();
+      var csrfParam = document.querySelector("meta[name='csrf-param']").content;
+      var csrfToken = document.querySelector("meta[name='csrf-token']").content;
+      uploadFormData.append(csrfParam, csrfToken);
+      uploadFormData.append("record[voice]", blob);
+
+      axios
+        .post("/records", uploadFormData)
+        .then(result => {
+          console.log(result);
+          window.location.reload(true);
+        })
+        .catch(error => {
+          console.log(error);
+        });
+
       console.log("recorder stopped");
     };
 
