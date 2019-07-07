@@ -7,6 +7,10 @@ require("@rails/ujs").start();
 require("turbolinks").start();
 require("@rails/activestorage").start();
 require("channels");
+const OpusMediaRecorder = require("opus-media-recorder");
+const Worker = require("opus-media-recorder/encoderWorker.js");
+const OggOpusWasm = require("opus-media-recorder/OggOpusEncoder.wasm");
+const WebMOpusWasm = require("opus-media-recorder/WebMOpusEncoder.wasm");
 const axios = require("axios");
 
 // Uncomment to copy all static images under ../images to the output folder and reference
@@ -15,6 +19,9 @@ const axios = require("axios");
 //
 // const images = require.context('../images', true)
 // const imagePath = (name) => images(name, true)
+
+// Polyfill
+window.MediaRecorder = OpusMediaRecorder;
 
 document.addEventListener("turbolinks:load", init);
 
@@ -31,9 +38,18 @@ function init() {
   const constraints = { audio: true };
   let chunks = [];
 
+  const mimeType = "audio/ogg";
+
   const onSuccess = stream => {
-    var options = { mimeType: "audio/webm" };
-    const mediaRecorder = new MediaRecorder(stream, options);
+    const options = {
+      mimeType: mimeType
+    };
+    const workerOptions = {
+      encoderWorkerFactory: _ => new Worker(),
+      OggOpusEncoderWasmPath: OggOpusWasm,
+      WebMOpusEncoderWasmPath: WebMOpusWasm
+    };
+    const mediaRecorder = new MediaRecorder(stream, options, workerOptions);
 
     startButton.addEventListener("click", () => {
       mediaRecorder.start();
@@ -54,7 +70,7 @@ function init() {
     mediaRecorder.onstop = e => {
       console.log("data available after MediaRecorder.stop() called.");
 
-      var blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+      var blob = new Blob(chunks, { type: mimeType });
       chunks = [];
 
       var uploadFormData = new FormData();
