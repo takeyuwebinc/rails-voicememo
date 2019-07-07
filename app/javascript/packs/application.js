@@ -38,7 +38,9 @@ function init() {
   const constraints = { audio: true };
   let chunks = [];
 
-  const mimeType = "audio/ogg";
+  // iOS Safari は ogg の再生ができない
+  // このサンプルでは容量が大きくなってもやむなしとして wav で
+  const mimeType = "audio/wav";
 
   const onSuccess = stream => {
     const options = {
